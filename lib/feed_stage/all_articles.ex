@@ -11,8 +11,8 @@
 defmodule FeedStage.AllArticles do
   use GenStage
 
-  def start_link(initial \\ 0) do
-    GenStage.start_link(__MODULE__, :no_repo, name: __MODULE__)
+  def start_link(args \\ {}) do
+    GenStage.start_link(__MODULE__, args, name: __MODULE__)
   end
 
   @doc """
@@ -24,11 +24,13 @@ defmodule FeedStage.AllArticles do
       also can be used to mark a url as checked.
     - url_scraper: A module that has a function to scrape a url.
   """
-  def init(url_repository) do
-    {:producer, :unused_state}
+  def init({url_repository, _url_scraper}) do
+    state = %{url_repository: url_repository}
+    {:producer, state}
   end
 
   def handle_demand(demand, state) when demand > 0 do
-    {:noreply, things = [:whatever, :you, :want], state}
+    url = state.url_repository.pop_url()
+    {:noreply, [], state}
   end
 end

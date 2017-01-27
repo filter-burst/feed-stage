@@ -29,7 +29,8 @@ defmodule FeedStage.Mixfile do
   defp deps do
     [
       {:scrape, "~> 1.2"},
-      {:gen_stage, "~> 0.11"}
+      {:gen_stage, "~> 0.11"},
+      {:stubr, "~> 1.5.0"}
     ]
   end
 end
