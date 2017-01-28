@@ -1,7 +1,7 @@
-defmodule FeedStage.AllArticlesTest do
+defmodule FeedStage.Stages.AllArticlesTest do
   use ExUnit.Case
   alias FeedStage.UrlRepository.MockRepository
-  alias FeedStage.AllArticles
+  alias FeedStage.Stages.AllArticles
 
   setup do
     MockRepository.start_link
@@ -25,28 +25,28 @@ defmodule FeedStage.AllArticlesTest do
     state = stub_state(%{"url1" => [1,2,3,4,5,6,7]})
 
     assert {:noreply, [1,2,3], output_state} = AllArticles.handle_demand(3, state)
-    assert [4,5,6,7] == output_state.article_buffer
+    assert [4,5,6,7] == output_state.buffer
   end
 
   test "when there are enough articles in the buffer, use those instead of fetching" do
-    state = stub_state(%{"url1" => [1,2,3,4,5,6,7]}, article_buffer: [8,9,10,11])
+    state = stub_state(%{"url1" => [1,2,3,4,5,6,7]}, buffer: [8,9,10,11])
 
     assert {:noreply, [8,9,10], output_state} = AllArticles.handle_demand(3, state)
-    assert [11] == output_state.article_buffer
+    assert [11] == output_state.buffer
   end
 
   test "keep fetching feeds until enough articles are available to meet demand" do
     state = stub_state(%{"url1" => [1,2], "url2" => [3], "url3" => [4,5,6]})
 
     assert {:noreply, [1,2,3,4,5], output_state} = AllArticles.handle_demand(5, state)
-    assert [6] == output_state.article_buffer
+    assert [6] == output_state.buffer
   end
 
   test "if you run out of feeds, buffer demand and return what you have" do
     state = stub_state(%{"url1" => [1,2], "url2" => [3]})
 
     assert {:noreply, [1,2,3], output_state} = AllArticles.handle_demand(5, state)
-    assert [] == output_state.article_buffer
+    assert [] == output_state.buffer
     assert 2 == output_state.demand
   end
 
@@ -54,7 +54,7 @@ defmodule FeedStage.AllArticlesTest do
     state = stub_state(%{"url1" => [1,2,3,4,5,6,7]}, demand: 2)
 
     assert {:noreply, [1,2,3,4,5], output_state} = AllArticles.handle_demand(3, state)
-    assert [6,7] == output_state.article_buffer
+    assert [6,7] == output_state.buffer
     assert 0 == output_state.demand
   end
 
@@ -75,7 +75,7 @@ defmodule FeedStage.AllArticlesTest do
     result = %{
       url_repository: MockRepository,
       feed_scraper: scraper,
-      article_buffer: [],
+      buffer: [],
       demand: 0,
     }
     Map.merge(result, Enum.into(other_args, %{}))

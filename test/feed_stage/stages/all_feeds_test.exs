@@ -1,7 +1,7 @@
-defmodule FeedStage.AllFeedsTest do
+defmodule FeedStage.Stages.AllFeedsTest do
   use ExUnit.Case
   alias FeedStage.UrlRepository.MockRepository
-  alias FeedStage.AllFeeds
+  alias FeedStage.Stages.AllFeeds
 
   setup do
     MockRepository.start_link
@@ -15,6 +15,13 @@ defmodule FeedStage.AllFeedsTest do
   test "with available urls, parse enough to meet demand" do
     state = stub_state(%{"url1" => 1, "url2" => 2, "url3" => 3})
     assert {:noreply, [1,2], _} = AllFeeds.handle_demand(2, state)
+  end
+
+  test "with insufficient urls to meet demand, buffer demand and return what you have" do
+    state = stub_state(%{"url1" => 1, "url2" => 2, "url3" => 3})
+
+    assert {:noreply, [1,2,3], output_state} = AllFeeds.handle_demand(5, state)
+    assert 2 == output_state.demand
   end
 
   # --------- HELPERS ------------
@@ -34,7 +41,7 @@ defmodule FeedStage.AllFeedsTest do
     result = %{
       url_repository: MockRepository,
       feed_scraper: scraper,
-      feed_buffer: [],
+      buffer: [],
       demand: 0,
     }
     Map.merge(result, Enum.into(other_args, %{}))
