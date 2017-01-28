@@ -14,7 +14,7 @@ defmodule FeedStage.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger, :scrape]]
+    [applications: [:logger, :scrape, :httpoison]]
   end
 
   # Dependencies can be Hex packages:
@@ -28,6 +28,7 @@ defmodule FeedStage.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
+      {:httpoison, "~> 0.11.0"},
       {:scrape, "~> 1.2"},
       {:gen_stage, "~> 0.11"},
       {:stubr, "~> 1.5.0"}

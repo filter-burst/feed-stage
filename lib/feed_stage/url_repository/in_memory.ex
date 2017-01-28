@@ -21,4 +21,10 @@ defmodule FeedStage.UrlRepository.InMemory do
         nil
     end
   end
+
+  def pop(amount) do
+    {result, remainder} = Enum.split(urls(), amount)
+    set(remainder ++ result)
+    result
+  end
 end
