@@ -16,13 +16,11 @@ defmodule FeedStage.AllArticles do
   end
 
   @doc """
-  Prints a hello message
-
   ## Parameters
 
     - url_repository: A module which can provide the next feed url to check, and
       also can be used to mark a url as checked.
-    - url_scraper: A module that has a function to scrape a url.
+    - feed_scraper: A module that has a function to scrape a url.
   """
   def init({url_repository, feed_scraper}) do
     state = %{url_repository: url_repository, feed_scraper: feed_scraper, article_buffer: []}
@@ -30,8 +28,8 @@ defmodule FeedStage.AllArticles do
   end
 
   def handle_demand(demand, state) when demand > 0 do
-    state = buffer_demanded_articles(demand, state)
     state = buffer_demand(demand, state)
+    state = buffer_demanded_articles(state.demand, state)
     {articles, state} = retrieve_articles_from_buffer(state.demand, state)
 
     {:noreply, articles, state}

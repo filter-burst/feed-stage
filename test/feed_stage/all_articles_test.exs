@@ -58,8 +58,6 @@ defmodule FeedStage.AllArticlesTest do
     assert 0 == output_state.demand
   end
 
-  # test "if there is a problem fetching a url, tell the url repository"
-
   # --------- HELPERS ------------
 
   defp stub_scraper(url_mappings) do
