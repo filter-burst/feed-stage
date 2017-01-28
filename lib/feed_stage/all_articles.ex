@@ -25,13 +25,14 @@ defmodule FeedStage.AllArticles do
     - url_scraper: A module that has a function to scrape a url.
   """
   def init({url_repository, feed_scraper}) do
-    state = %{url_repository: url_repository, feed_scraper: feed_scraper, buffer: []}
+    state = %{url_repository: url_repository, feed_scraper: feed_scraper, article_buffer: []}
     {:producer, state}
   end
 
   def handle_demand(demand, state) when demand > 0 do
     state = buffer_demanded_articles(demand, state)
-    {articles, state} = retrieve_articles_from_buffer(demand, state)
+    state = buffer_demand(demand, state)
+    {articles, state} = retrieve_articles_from_buffer(state.demand, state)
 
     {:noreply, articles, state}
   end
@@ -39,7 +40,7 @@ defmodule FeedStage.AllArticles do
   # ----------------------- PRIVATE -----------------------
 
   defp buffer_demanded_articles(demand, state) do
-    if length(state.buffer) < demand do
+    if length(state.article_buffer) < demand do
       case buffer_articles(state) do
         {:ok, state} ->     buffer_demanded_articles(demand, state)
         {:no_url, state} -> state
@@ -57,12 +58,16 @@ defmodule FeedStage.AllArticles do
   defp buffer_articles_from_url(url, state) when url == nil, do: {:no_url, state}
   defp buffer_articles_from_url(url, state) do
     articles = state.feed_scraper.get_articles(url)
-    {:ok, %{state | buffer: state.buffer ++ articles}}
+    {:ok, %{state | article_buffer: state.article_buffer ++ articles}}
   end
 
   defp retrieve_articles_from_buffer(demand, state) do
-    {demanded, remainder} = Enum.split(state.buffer, demand)
-    {demanded, %{state | buffer: remainder}}
+    {retrieved, remainder} = Enum.split(state.article_buffer, demand)
+    new_demand = state.demand - length(retrieved)
+    {retrieved, %{state | article_buffer: remainder, demand: new_demand}}
   end
 
+  defp buffer_demand(demand, state) do
+    %{state | demand: state.demand + demand}
+  end
 end
