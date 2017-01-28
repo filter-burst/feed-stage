@@ -28,9 +28,11 @@ defmodule FeedStage.CLI do
     FeedStage.UrlRepository.MockRepository.set(["http://feeds.feedburner.com/venturebeat/SZYF", "https://medium.com/feed/@lasseebert"])
 
     {:ok, all_feeds} = FeedStage.Stages.AllFeeds.start_link({FeedStage.UrlRepository.MockRepository, nil})
+    {:ok, all_articles} = FeedStage.Stages.AllArticles.start_link()
     {:ok, inspector} = InspectingConsumer.start_link
 
-    GenStage.sync_subscribe(inspector, to: all_feeds)
+    GenStage.sync_subscribe(all_articles, to: all_feeds)
+    GenStage.sync_subscribe(inspector, to: all_articles)
   end
 
   def main(_argv \\ []) do
