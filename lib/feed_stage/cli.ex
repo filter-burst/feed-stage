@@ -24,15 +24,18 @@ end
 defmodule FeedStage.CLI do
   def start_dummy do
     IO.puts "starting dummy"
-    FeedStage.UrlRepository.MockRepository.start_link
-    FeedStage.UrlRepository.MockRepository.set(["http://feeds.feedburner.com/venturebeat/SZYF", "https://medium.com/feed/@lasseebert"])
+    FeedStage.UrlRepository.InMemory.start_link
+    FeedStage.UrlRepository.InMemory.set([
+      "http://feeds.feedburner.com/venturebeat/SZYF",
+      "https://medium.com/feed/@lasseebert",
+      "http://lorem-rss.herokuapp.com/feed?unit=minute"])
 
-    {:ok, all_feeds} = FeedStage.Stages.AllFeeds.start_link({FeedStage.UrlRepository.MockRepository, nil})
+    {:ok, all_feeds} = FeedStage.Stages.AllFeeds.start_link({FeedStage.UrlRepository.InMemory, nil})
     {:ok, all_articles} = FeedStage.Stages.AllArticles.start_link()
     {:ok, inspector} = InspectingConsumer.start_link
 
-    GenStage.sync_subscribe(all_articles, to: all_feeds)
-    GenStage.sync_subscribe(inspector, to: all_articles)
+    GenStage.sync_subscribe(all_articles, to: all_feeds, min_demand: 1, max_demand: 2)
+    GenStage.sync_subscribe(inspector, to: all_articles, min_demand: 5, max_demand: 10)
   end
 
   def main(_argv \\ []) do

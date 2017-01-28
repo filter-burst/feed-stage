@@ -1,4 +1,4 @@
-defmodule FeedStage.UrlRepository.MockRepository do
+defmodule FeedStage.UrlRepository.InMemory do
   def start_link do
     Agent.start_link(fn -> [] end, name: __MODULE__)
     set([])
@@ -15,7 +15,7 @@ defmodule FeedStage.UrlRepository.MockRepository do
   def pop_url() do
     case urls() do
       [head | tail] ->
-        set(tail)
+        set(tail ++ [head])
         head
       [] ->
         nil
