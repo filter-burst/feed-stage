@@ -16,7 +16,12 @@ defmodule FeedStage.Stages.AllFeeds do
     - feed_scraper: A module that has a function to scrape a url.
   """
   def init({url_repository, feed_scraper}) do
-    state = %{url_repository: url_repository, feed_scraper: feed_scraper, buffer: []}
+    state = %{
+      url_repository: url_repository,
+      feed_scraper: feed_scraper || FeedStage.FeedScraper.Scrape,
+      buffer: [],
+      demand: 0
+    }
     {:producer, state}
   end
 
