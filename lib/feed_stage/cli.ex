@@ -24,6 +24,8 @@ end
 defmodule FeedStage.CLI do
   def start_dummy do
     IO.puts "starting dummy"
+    HTTPoison.start
+
     FeedStage.UrlRepository.InMemory.start_link
     FeedStage.UrlRepository.InMemory.set([
       "http://feeds.feedburner.com/venturebeat/SZYF",
@@ -32,14 +34,21 @@ defmodule FeedStage.CLI do
 
     FeedStage.ArticleRepository.InMemory.start_link
 
-    {:ok, all_feeds} = FeedStage.Stages.AllFeeds.start_link({FeedStage.UrlRepository.InMemory, nil})
-    {:ok, all_articles} = FeedStage.Stages.AllArticles.start_link()
-    {:ok, new_articles} = FeedStage.Stages.NewArticles.start_link(FeedStage.ArticleRepository.InMemory)
+    {:ok, feed_resource_urls} = FeedStage.Stages.FeedResourceUrls.start_link(FeedStage.UrlRepository.InMemory)
+    {:ok, fetch_resources} = FeedStage.Stages.FetchResources.start_link
     {:ok, inspector} = InspectingConsumer.start_link
 
-    GenStage.sync_subscribe(all_articles, to: all_feeds, min_demand: 1, max_demand: 2)
-    GenStage.sync_subscribe(new_articles, to: all_articles, min_demand: 5, max_demand: 10)
-    GenStage.sync_subscribe(inspector, to: new_articles, min_demand: 5, max_demand: 10)
+    GenStage.sync_subscribe(fetch_resources, to: feed_resource_urls, min_demand: 1, max_demand: 3)
+    GenStage.sync_subscribe(inspector, to: fetch_resources, min_demand: 1, max_demand: 3)
+
+    # {:ok, all_feeds} = FeedStage.Stages.AllFeeds.start_link({FeedStage.UrlRepository.InMemory, nil})
+    # {:ok, all_articles} = FeedStage.Stages.AllArticles.start_link()
+    # {:ok, new_articles} = FeedStage.Stages.NewArticles.start_link(FeedStage.ArticleRepository.InMemory)
+    # {:ok, inspector} = InspectingConsumer.start_link
+    #
+    # GenStage.sync_subscribe(all_articles, to: all_feeds, min_demand: 1, max_demand: 2)
+    # GenStage.sync_subscribe(new_articles, to: all_articles, min_demand: 5, max_demand: 10)
+    # GenStage.sync_subscribe(inspector, to: new_articles, min_demand: 5, max_demand: 10)
   end
 
   def main(_argv \\ []) do
