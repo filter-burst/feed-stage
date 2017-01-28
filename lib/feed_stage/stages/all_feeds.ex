@@ -1,5 +1,8 @@
+
 defmodule FeedStage.Stages.AllFeeds do
   use GenStage
+  use FeedStage.StageHelpers.BuffersDemand
+  use FeedStage.StageHelpers.BuffersSupply
 
   def start_link(args \\ {}) do
     GenStage.start_link(__MODULE__, args, name: __MODULE__)
@@ -20,7 +23,7 @@ defmodule FeedStage.Stages.AllFeeds do
   def handle_demand(demand, state) when demand > 0 do
     state = buffer_demand(demand, state)
     state = buffer_demanded_feeds(state.demand, state)
-    {feeds, state} = retrieve_feeds_from_buffer(state.demand, state)
+    {feeds, state} = retrieve_items_from_buffer(state.demand, state)
     {:noreply, feeds, state}
   end
 
@@ -45,16 +48,6 @@ defmodule FeedStage.Stages.AllFeeds do
   defp buffer_feed_from_url(url, state) when url == nil, do: {:no_url, state}
   defp buffer_feed_from_url(url, state) do
     articles = state.feed_scraper.get_articles(url)
-    {:ok, %{state | buffer: state.buffer ++ [articles]}}
-  end
-
-  defp retrieve_feeds_from_buffer(demand, state) do
-    {retrieved, remainder} = Enum.split(state.buffer, demand)
-    new_demand = state.demand - length(retrieved)
-    {retrieved, %{state | buffer: remainder, demand: new_demand}}
-  end
-
-  defp buffer_demand(demand, state) do
-    %{state | demand: state.demand + demand}
+    {:ok, add_items_to_buffer([articles], state)}
   end
 end
