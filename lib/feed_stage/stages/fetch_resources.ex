@@ -1,8 +1,6 @@
 defmodule FeedStage.Stages.FetchResources do
   use GenStage
-  # use FeedStage.StageHelpers.BuffersDemand
-#   use FeedStage.StageHelpers.BuffersSupply
-#
+
   def start_link(resource_fetcher \\ HTTPoison) do
     GenStage.start_link(__MODULE__, resource_fetcher, name: __MODULE__)
   end
@@ -14,6 +12,7 @@ defmodule FeedStage.Stages.FetchResources do
 
   def handle_events(urls, _from, state) do
     output = Enum.map(urls, fn(url) -> fetch_resource(url, state) end)
+    output = Enum.reject(output, &(&1 == nil))
     {:noreply, output, state}
   end
 
@@ -24,5 +23,5 @@ defmodule FeedStage.Stages.FetchResources do
   end
 
   defp handle_response({:ok, %HTTPoison.Response{status_code: 200} = response}), do: response.body
-  defp handle_response({_, response}), do: nil
+  defp handle_response(_), do: nil
 end
