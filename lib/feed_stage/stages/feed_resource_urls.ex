@@ -1,7 +1,6 @@
 defmodule FeedStage.Stages.FeedResourceUrls do
   use GenStage
   use FeedStage.StageHelpers.BuffersDemand
-  use FeedStage.StageHelpers.BuffersSupply
 
   def start_link(url_repository) do
     GenStage.start_link(__MODULE__, url_repository, name: __MODULE__)
