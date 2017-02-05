@@ -1,23 +1,17 @@
 defmodule FeedStage.Stages.ParseFeeds do
   use GenStage
 
-  def start_link() do
-    GenStage.start_link(__MODULE__, :ok, name: __MODULE__)
+  def start_link(parser \\ FeedStage.Parser) do
+    GenStage.start_link(__MODULE__, parser, name: __MODULE__)
   end
 
-  def init(:ok) do
-    {:producer_consumer, :unused_state}
+  def init(parser) do
+    {:producer_consumer, parser}
   end
 
-  def handle_events(resources, _from, state) do
-    output = Enum.map(resources, &parse_resource/1)
+  def handle_events(resources, _from, parser) do
+    output = Enum.map(resources, &(parser.parse_feed(&1)))
     output = Enum.reject(output, &(&1 == nil))
-    {:noreply, output, state}
-  end
-
-  # ----------------------- PRIVATE -----------------------
-
-  defp parse_resource(resource) do
-    Scrape.Feed.parse(resource, :unused)
+    {:noreply, output, parser}
   end
 end

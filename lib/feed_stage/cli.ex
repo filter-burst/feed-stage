@@ -40,12 +40,14 @@ defmodule FeedStage.CLI do
     {:ok, inspector} = InspectingConsumer.start_link
     {:ok, all_articles} = FeedStage.Stages.AllArticles.start_link()
     {:ok, new_articles} = FeedStage.Stages.NewArticles.start_link(FeedStage.ArticleRepository.InMemory)
+    {:ok, fetch_metadata} = FeedStage.Stages.FetchMetadata.start_link()
 
     GenStage.sync_subscribe(fetch_resources, to: feed_resource_urls, min_demand: 1, max_demand: 3)
     GenStage.sync_subscribe(parse_feeds, to: fetch_resources, min_demand: 1, max_demand: 3)
     GenStage.sync_subscribe(all_articles, to: parse_feeds, min_demand: 1, max_demand: 3)
     GenStage.sync_subscribe(new_articles, to: all_articles, min_demand: 5, max_demand: 10)
-    GenStage.sync_subscribe(inspector, to: new_articles, min_demand: 5, max_demand: 10)
+    GenStage.sync_subscribe(fetch_metadata, to: new_articles, min_demand: 5, max_demand: 10)
+    GenStage.sync_subscribe(inspector, to: fetch_metadata, min_demand: 5, max_demand: 10)
   end
 
   def main(_argv \\ []) do

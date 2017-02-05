@@ -9,8 +9,8 @@ defmodule FeedStage.Stages.NewArticles do
     {:producer_consumer, article_repository}
   end
 
-  def handle_events(feeds, _from, article_repository) do
-    output = Enum.filter(feeds, fn(article) -> article_repository.new?(article) end)
+  def handle_events(articles, _from, article_repository) do
+    output = Enum.filter(articles, fn(article) -> article_repository.new?(article) end)
     {:noreply, output, article_repository}
   end
 end
