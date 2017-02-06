@@ -29,7 +29,7 @@ defmodule FeedStage.Mixfile do
   defp deps do
     [
       {:httpoison, "~> 0.11.0"},
-      {:scrape, "~> 1.2"},
+      {:scrape, "~> 1.2", git: "git://github.com/craigambrose/elixir-scrape.git"},
       {:gen_stage, "~> 0.11"},
       {:stubr, "~> 1.5.0"}
     ]
