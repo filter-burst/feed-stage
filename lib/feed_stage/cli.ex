@@ -29,7 +29,6 @@ defmodule FeedStage.CLI do
     {:ok, feed_resource_urls} = FeedStage.Stages.FeedResourceUrls.start_link(url_repository)
     {:ok, fetch_resources} = FeedStage.Stages.FetchResources.start_link
     {:ok, parse_feeds} = FeedStage.Stages.ParseFeeds.start_link
-    {:ok, inspector} = InspectingConsumer.start_link
     {:ok, all_articles} = FeedStage.Stages.AllArticles.start_link()
     {:ok, new_articles} = FeedStage.Stages.NewArticles.start_link(article_repository)
     {:ok, fetch_metadata} = FeedStage.Stages.FetchMetadata.start_link()
@@ -39,6 +38,9 @@ defmodule FeedStage.CLI do
     GenStage.sync_subscribe(all_articles, to: parse_feeds, min_demand: 10, max_demand: 50)
     GenStage.sync_subscribe(new_articles, to: all_articles, min_demand: 10, max_demand: 50)
     GenStage.sync_subscribe(fetch_metadata, to: new_articles, min_demand: 10, max_demand: 50)
+
+    # This inspector just dumps the results to STDOUT
+    {:ok, inspector} = InspectingConsumer.start_link
     GenStage.sync_subscribe(inspector, to: fetch_metadata, min_demand: 1, max_demand: 2)
   end
 

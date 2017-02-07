@@ -23,9 +23,7 @@ defmodule FeedStage.Stages.FetchMetadata do
   end
 
   def handle_events(articles, _from, parser) do
-    parent = self()
-    output = articles
-           |> Enum.map(&Task.async(fn -> fetch_article_metadata(&1, parser) end))
+    Enum.map(articles, &Task.async(fn -> fetch_article_metadata(&1, parser) end))
     {:noreply, [], parser}
   end
 
