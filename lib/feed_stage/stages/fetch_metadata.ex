@@ -9,20 +9,35 @@ defmodule FeedStage.Stages.FetchMetadata do
     {:producer_consumer, parser}
   end
 
+  def handle_info({_ref, {:parse_error}}, state) do
+    IO.puts "-- RECEIVED :parse_error"
+    {:noreply, [], state}
+  end
+
+  def handle_info({_ref, {:parsed_ok, article_with_metadata}}, state) do
+    {:noreply, [article_with_metadata], state}
+  end
+
+  def handle_info({:DOWN, _ref, :process, _pid, :normal}, state) do
+    {:noreply, [], state}
+  end
+
   def handle_events(articles, _from, parser) do
-    output = Enum.map(articles, fn(article) -> fetch_article_metadata(article, parser) end)
-    output = Enum.filter(output, fn(result) -> result != nil end)
-    {:noreply, output, parser}
+    parent = self()
+    output = articles
+           |> Enum.map(&Task.async(fn -> fetch_article_metadata(&1, parser) end))
+    {:noreply, [], parser}
+  end
+
+  def fetch_article_metadata(article, parser) do
+    IO.puts "-- fetching metadata #{article.url}"
+    case parser.scrape_article(article.url) do
+      {:error, _} -> {:parse_error}
+      {:ok, metadata} -> {:parsed_ok, merge_metadata(article, metadata)}
+    end
   end
 
   # ----------------------- PRIVATE -----------------------
-
-  defp fetch_article_metadata(article, parser) do
-    case parser.scrape_article(article.url) do
-      {:error, _} -> nil
-      {:ok, metadata} -> merge_metadata(article, metadata)
-    end
-  end
 
   defp merge_metadata(article, metadata) do
     Map.merge(article, filter_useful_metadata(metadata))

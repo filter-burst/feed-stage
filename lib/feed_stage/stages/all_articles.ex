@@ -10,6 +10,7 @@ defmodule FeedStage.Stages.AllArticles do
   end
 
   def handle_events(feeds, _from, state) do
+    IO.puts "AllArticles #{length(feeds)}"
     {:noreply, List.flatten(feeds), state}
   end
 end

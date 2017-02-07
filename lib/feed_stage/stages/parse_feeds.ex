@@ -12,6 +12,8 @@ defmodule FeedStage.Stages.ParseFeeds do
   def handle_events(resources, _from, parser) do
     output = Enum.map(resources, &(parser.parse_feed(&1)))
     output = Enum.reject(output, &(&1 == nil))
+    IO.puts "ParseFeeds #{length(resources)}"
+
     {:noreply, output, parser}
   end
 end

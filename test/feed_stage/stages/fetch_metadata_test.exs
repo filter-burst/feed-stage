@@ -15,7 +15,7 @@ defmodule FeedStage.Stages.FetchMetadataTest do
     blank_result = {:error, nil}
 
     stub_parser = Stubr.stub!([scrape_article: fn "url1" -> blank_result end])
-    assert {:noreply, [], _} = FetchMetadata.handle_events([rss_article], :from, stub_parser)
+    assert {:parse_error} = FetchMetadata.fetch_article_metadata(rss_article, stub_parser)
   end
 
   test "when site can be fetched, merge data in with rss data" do
@@ -45,7 +45,7 @@ defmodule FeedStage.Stages.FetchMetadataTest do
     }
 
     stub_parser = Stubr.stub!([scrape_article: fn "url1" -> {:ok, scrape_article} end])
-    assert {:noreply, [result], _} = FetchMetadata.handle_events([rss_article], :from, stub_parser)
+    assert {:parsed_ok, result} = FetchMetadata.fetch_article_metadata(rss_article, stub_parser)
     assert expected == result
   end
 

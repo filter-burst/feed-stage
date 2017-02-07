@@ -7,10 +7,8 @@ defmodule FeedStage.ArticleRepository.InMemory do
   def new?(article) do
     state = get_state()
     if MapSet.member?(state, article.url) do
-      IO.puts "-- not new: #{article.url}"
       false
     else
-      IO.puts "NEW: #{article.url}"
       set_state MapSet.put(state, article.url)
       true
     end

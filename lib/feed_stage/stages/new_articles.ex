@@ -11,6 +11,7 @@ defmodule FeedStage.Stages.NewArticles do
 
   def handle_events(articles, _from, article_repository) do
     output = Enum.filter(articles, fn(article) -> article_repository.new?(article) end)
+    IO.puts "NewArticles #{length(articles)}"
     {:noreply, output, article_repository}
   end
 end

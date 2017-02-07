@@ -34,12 +34,12 @@ defmodule FeedStage.CLI do
     {:ok, new_articles} = FeedStage.Stages.NewArticles.start_link(article_repository)
     {:ok, fetch_metadata} = FeedStage.Stages.FetchMetadata.start_link()
 
-    GenStage.sync_subscribe(fetch_resources, to: feed_resource_urls, min_demand: 1, max_demand: 3)
-    GenStage.sync_subscribe(parse_feeds, to: fetch_resources, min_demand: 1, max_demand: 3)
-    GenStage.sync_subscribe(all_articles, to: parse_feeds, min_demand: 1, max_demand: 3)
-    GenStage.sync_subscribe(new_articles, to: all_articles, min_demand: 5, max_demand: 10)
-    GenStage.sync_subscribe(fetch_metadata, to: new_articles, min_demand: 5, max_demand: 10)
-    GenStage.sync_subscribe(inspector, to: fetch_metadata, min_demand: 5, max_demand: 10)
+    GenStage.sync_subscribe(fetch_resources, to: feed_resource_urls, min_demand: 1, max_demand: 10)
+    GenStage.sync_subscribe(parse_feeds, to: fetch_resources, min_demand: 1, max_demand: 10)
+    GenStage.sync_subscribe(all_articles, to: parse_feeds, min_demand: 10, max_demand: 50)
+    GenStage.sync_subscribe(new_articles, to: all_articles, min_demand: 10, max_demand: 50)
+    GenStage.sync_subscribe(fetch_metadata, to: new_articles, min_demand: 10, max_demand: 50)
+    GenStage.sync_subscribe(inspector, to: fetch_metadata, min_demand: 1, max_demand: 2)
   end
 
   def start_dummy do
