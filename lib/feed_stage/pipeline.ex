@@ -1,13 +1,23 @@
 defmodule FeedStage.Pipeline do
+  alias FeedStage.Stages.FeedResourceUrls
+  alias FeedStage.Stages.FetchResources
+  alias FeedStage.Stages.ParseFeeds
+  alias FeedStage.Stages.AllArticles
+  alias FeedStage.Stages.NewArticles
+  alias FeedStage.Stages.FetchMetadata
+
   def start(options) do
     {url_repository, article_repository} = options_with_defaults(options)
 
-    {:ok, feed_resource_urls} = FeedStage.Stages.FeedResourceUrls.start_link(url_repository)
-    {:ok, fetch_resources} = FeedStage.Stages.FetchResources.start_link
-    {:ok, parse_feeds} = FeedStage.Stages.ParseFeeds.start_link
-    {:ok, all_articles} = FeedStage.Stages.AllArticles.start_link()
-    {:ok, new_articles} = FeedStage.Stages.NewArticles.start_link(article_repository)
-    {:ok, fetch_metadata} = FeedStage.Stages.FetchMetadata.start_link()
+    # Used by FetchResources
+    HTTPoison.start
+
+    {:ok, feed_resource_urls} = FeedResourceUrls.start_link(url_repository)
+    {:ok, fetch_resources} = FetchResources.start_link
+    {:ok, parse_feeds} = ParseFeeds.start_link
+    {:ok, all_articles} = AllArticles.start_link()
+    {:ok, new_articles} = NewArticles.start_link(article_repository)
+    {:ok, fetch_metadata} = FetchMetadata.start_link()
 
     GenStage.sync_subscribe(fetch_resources, to: feed_resource_urls, min_demand: 1, max_demand: 10)
     GenStage.sync_subscribe(parse_feeds, to: fetch_resources, min_demand: 1, max_demand: 10)
