@@ -25,25 +25,6 @@ defmodule FeedStage.CLI do
   alias FeedStage.UrlRepository.InMemory, as: UrlRepository
   alias FeedStage.ArticleRepository.InMemory, as: ArticleRepository
 
-  def start_pipeline(url_repository, article_repository) do
-    {:ok, feed_resource_urls} = FeedStage.Stages.FeedResourceUrls.start_link(url_repository)
-    {:ok, fetch_resources} = FeedStage.Stages.FetchResources.start_link
-    {:ok, parse_feeds} = FeedStage.Stages.ParseFeeds.start_link
-    {:ok, all_articles} = FeedStage.Stages.AllArticles.start_link()
-    {:ok, new_articles} = FeedStage.Stages.NewArticles.start_link(article_repository)
-    {:ok, fetch_metadata} = FeedStage.Stages.FetchMetadata.start_link()
-
-    GenStage.sync_subscribe(fetch_resources, to: feed_resource_urls, min_demand: 1, max_demand: 10)
-    GenStage.sync_subscribe(parse_feeds, to: fetch_resources, min_demand: 1, max_demand: 10)
-    GenStage.sync_subscribe(all_articles, to: parse_feeds, min_demand: 10, max_demand: 50)
-    GenStage.sync_subscribe(new_articles, to: all_articles, min_demand: 10, max_demand: 50)
-    GenStage.sync_subscribe(fetch_metadata, to: new_articles, min_demand: 10, max_demand: 50)
-
-    # This inspector just dumps the results to STDOUT
-    {:ok, inspector} = InspectingConsumer.start_link
-    GenStage.sync_subscribe(inspector, to: fetch_metadata, min_demand: 1, max_demand: 2)
-  end
-
   def start_dummy do
     IO.puts "starting dummy"
     HTTPoison.start
@@ -56,7 +37,14 @@ defmodule FeedStage.CLI do
 
     ArticleRepository.start_link
 
-    start_pipeline(UrlRepository, ArticleRepository)
+    pipeline = FeedStage.Pipeline.start(
+      url_repository: UrlRepository,
+      article_repository: ArticleRepository
+    )
+
+    # This inspector just dumps the results to STDOUT
+    {:ok, inspector} = InspectingConsumer.start_link
+    GenStage.sync_subscribe(inspector, to: pipeline, min_demand: 1, max_demand: 2)
   end
 
   def main(_argv \\ []) do
