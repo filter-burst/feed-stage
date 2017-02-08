@@ -22,24 +22,18 @@ defmodule InspectingConsumer do
 end
 
 defmodule FeedStage.CLI do
-  alias FeedStage.UrlRepository.InMemory, as: UrlRepository
-  alias FeedStage.ArticleRepository.InMemory, as: ArticleRepository
-
   def start_dummy do
     IO.puts "starting dummy"
     HTTPoison.start
 
-    UrlRepository.start_link
-    UrlRepository.set([
+    urls = [
       "http://feeds.feedburner.com/venturebeat/SZYF",
       "https://medium.com/feed/@lasseebert",
-      "http://lorem-rss.herokuapp.com/feed?unit=second&interval=5"])
-
-    ArticleRepository.start_link
+      "http://lorem-rss.herokuapp.com/feed?unit=second&interval=5"
+    ]
 
     pipeline = FeedStage.Pipeline.start(
-      url_repository: UrlRepository,
-      article_repository: ArticleRepository
+      urls: urls
     )
 
     # This inspector just dumps the results to STDOUT

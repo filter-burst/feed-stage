@@ -1,9 +1,6 @@
 defmodule FeedStage.Pipeline do
   def start(options) do
-    %{
-      url_repository: url_repository,
-      article_repository: article_repository
-    } = Enum.into(options, %{})
+    {url_repository, article_repository} = options_with_defaults(options)
 
     {:ok, feed_resource_urls} = FeedStage.Stages.FeedResourceUrls.start_link(url_repository)
     {:ok, fetch_resources} = FeedStage.Stages.FetchResources.start_link
@@ -21,5 +18,30 @@ defmodule FeedStage.Pipeline do
     fetch_metadata
   end
 
+  # ----------------------- PRIVATE -----------------------
 
+  def options_with_defaults(options) do
+    defaults = [url_repository: nil, article_repository: nil, urls: nil]
+    options = Keyword.merge(defaults, options) |> Enum.into(%{})
+    %{
+      url_repository: url_repository,
+      article_repository: article_repository,
+      urls: urls
+    } = options
+    article_repository = article_repository || in_memory_article_repository()
+    url_repository = url_repository || in_memory_url_repository(urls)
+
+    {url_repository, article_repository}
+  end
+
+  defp in_memory_article_repository do
+    FeedStage.ArticleRepository.InMemory.start_link
+    FeedStage.ArticleRepository.InMemory
+  end
+
+  defp in_memory_url_repository(urls) do
+    FeedStage.UrlRepository.InMemory.start_link
+    FeedStage.UrlRepository.InMemory.set(urls)
+    FeedStage.UrlRepository.InMemory
+  end
 end
